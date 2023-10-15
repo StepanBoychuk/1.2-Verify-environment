@@ -1,21 +1,29 @@
 const { exec } = require('child_process');
 
 const nvmInitScript = '~/.nvm/nvm.sh';
-const environmentList = ['docker', 'git', 'npm', 'nvm', 'node', 'java']
+const toolsList = ['docker', 'git', 'npm', 'nvm', 'node'];
 
-const envVersionCheck = (envArray) => {
-    envArray.forEach((e) => {
-        exec(`/bin/bash -c "source ${nvmInitScript} && ${e} --version"`, (error, stdout, stderr) => {
-            if (error) {
-              console.error(`Error: ${error.message}`);
-              return;
-            }
-            if (stderr) {
-              console.error(`stderr: ${stderr}`);
-              return;
-            }
-            console.log(`${e} version: ${stdout}`);
-          });
-    }) 
-};
-envVersionCheck(environmentList);
+const runCommand = (toolName) => {
+  return new Promise((resolve) => {
+    exec(`/bin/bash -c "source ${nvmInitScript} && ${toolName} --version"`, (error, stdout, stderr) => {
+      resolve(stdout);
+    });
+  });
+}
+
+const envVersionCheck = async (toolName) => {
+  const toolVersion = await runCommand(toolName);
+  if(toolVersion) {
+    console.log(`${toolName}: ${toolVersion}`);
+  } else {
+    console.log(`${toolName} not found`);
+    process.exit(1);
+  }
+}
+
+toolsList.forEach(tool => {
+  envVersionCheck(tool).catch(error => {
+    console.error(error);
+    process.exit(1)
+  });
+});
