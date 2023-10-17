@@ -1,23 +1,24 @@
 const { exec } = require('child_process');
+const util = require('util');
 
 const nvmInitScript = '~/.nvm/nvm.sh';
 const toolsList = ['docker', 'git', 'npm', 'nvm', 'node'];
 
-const toolVersionCheck = (tool) => {
-  return new Promise((resolve) => {
-      exec(`/bin/bash -c "source ${nvmInitScript} && ${tool} --version"`, (error, stdout, stderr) => {
-        if (stdout){
-          resolve(console.log(`${tool}: ${stdout}`));
-        }else{
-          throw new Error(`${tool} not found.`);
-        }
-      });
-  });
+const promisifiedExec = util.promisify(exec);
+
+const toolVersionCheck = async (toolName) => {
+  try {
+    const { stdout } = await promisifiedExec(`/bin/bash -c "source ${nvmInitScript} && ${toolName} --version"`)
+    return stdout
+  } catch (error) {
+    console.error(`${toolName} not found`);
+    process.exit(4);
+  }
 }
 
 Promise.all(toolsList.map(tool => {
-  toolVersionCheck(tool).catch(error => {
-    console.log(error)
-    process.exit(1)
-  });
+  toolVersionCheck(tool)
+    .then(result => {
+      console.log(`${tool}: ${result}`);
+    });
 }));
