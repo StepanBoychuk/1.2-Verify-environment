@@ -8,15 +8,13 @@ const promisifiedExec = util.promisify(exec);
 
 const toolVersionCheck = async (toolName) => {
   const { stdout } = await promisifiedExec(`/bin/bash -c "source ${nvmInitScript} && ${toolName} --version"`);
-  return stdout;
+  return `${toolName}: ${stdout}`; 
 }
 
-Promise.all(toolsList.map(tool => {
-  toolVersionCheck(tool)
-    .then(result => {
-      console.log(`${tool}: ${result}`);
-    }).catch(error => {
-      console.error(`${tool} not found`);
-      process.exit(error.code);
-    })
-}));
+Promise.all(toolsList.map(toolVersionCheck))
+  .then(result => {
+    console.log(result);
+  }).catch(error => {
+    console.error(`${error}`);
+    process.exit(error.code);
+  })
